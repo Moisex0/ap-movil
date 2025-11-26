@@ -16,18 +16,42 @@ export default function CitaDetalle() {
   } = useLocalSearchParams();
 
   // ------------------------------
-  // FIX: Proteger valores faltantes
+  // 🔥 FIX DEFINITIVO
   // ------------------------------
-  const [barberiaFix, setBarberiaFix] = useState(barberia || "Sin dato");
-  const [barberoFix, setBarberoFix] = useState(barbero || "Sin dato");
+
+  const [barberiaFix, setBarberiaFix] = useState(barberia || "");
+  const [barberoFix, setBarberoFix] = useState(barbero || "");
+  const [idBarberoFix, setIdBarberoFix] = useState(Number(id_barbero) || null);
 
   useEffect(() => {
-    // Proteger valores si vienen vacíos
-    if (!barberia || barberia === "undefined") setBarberiaFix("Sin dato");
-    if (!barbero || barbero === "undefined") setBarberoFix("Sin dato");
-  }, []);
-  // ------------------------------
+    const cargarDatosAux = async () => {
+      // Guardar cuando existan
+      if (barberia) await AsyncStorage.setItem("ultima_barberia", barberia);
+      if (barbero) await AsyncStorage.setItem("ultimo_barbero", barbero);
+      if (id_barbero)
+        await AsyncStorage.setItem("ultimo_id_barbero", id_barbero.toString());
 
+      // Recuperar si no vinieron
+      if (!barberia) {
+        const guardada = await AsyncStorage.getItem("ultima_barberia");
+        if (guardada) setBarberiaFix(guardada);
+      }
+
+      if (!barbero) {
+        const guardado = await AsyncStorage.getItem("ultimo_barbero");
+        if (guardado) setBarberoFix(guardado);
+      }
+
+      if (!id_barbero) {
+        const guardadoID = await AsyncStorage.getItem("ultimo_id_barbero");
+        if (guardadoID) setIdBarberoFix(Number(guardadoID));
+      }
+    };
+
+    cargarDatosAux();
+  }, []);
+
+  // ------------------------------
   const API_URL = "https://codbarber-api.onrender.com/agendar.php";
 
   const confirmar = async () => {
@@ -40,12 +64,28 @@ export default function CitaDetalle() {
         return;
       }
 
+      // ❗ Validación crítica
+      if (!id_servicio || !idBarberoFix || !fecha || !hora) {
+        console.log("ERROR DATOS FALTANTES:", {
+          id_servicio,
+          idBarberoFix,
+          fecha,
+          hora,
+        });
+
+        Alert.alert(
+          "Error",
+          "Faltan datos para completar la cita. Regresa y selecciona nuevamente el servicio."
+        );
+        return;
+      }
+
       const body = {
         id_cliente: Number(id_cliente),
-        id_barbero: Number(id_barbero),
+        id_barbero: idBarberoFix,
         id_servicio: Number(id_servicio),
-        fecha: fecha,
-        hora: hora,
+        fecha,
+        hora,
       };
 
       console.log("BODY ENVIADO DESDE DETALLE:", body);
@@ -67,13 +107,11 @@ export default function CitaDetalle() {
         return;
       }
 
-      Alert.alert(
-        "Cita creada",
-        "Tu cita fue registrada correctamente :)",
-        [{ text: "OK", onPress: () => router.push("/perfil") }]
-      );
+      Alert.alert("Cita creada", "Tu cita fue registrada correctamente :)", [
+        { text: "OK", onPress: () => router.push("/perfil") },
+      ]);
     } catch (error) {
-      console.log("ERROR:", error);
+      console.log("ERROR AGENDAR:", error);
       Alert.alert("Error", "No se pudo conectar al servidor :(");
     }
   };

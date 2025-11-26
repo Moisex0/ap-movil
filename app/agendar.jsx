@@ -1,195 +1,248 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-export default function CitaDetalle() {
-  const {
-    barberia,
-    servicio,
-    barbero,
-    fecha,
-    hora,
-    precio,
-    id_servicio,
-    id_barbero,
-  } = useLocalSearchParams();
+export default function AgendarCita() {
+  const { id_barberia, id_servicio, barberia_nombre, servicio_nombre } =
+    useLocalSearchParams();
 
-  // ---------------------------------------------
-  // 🔥 FIX: recuperar barbería y barbero si no vinieron en los params
-  // ---------------------------------------------
-  const [barberiaFix, setBarberiaFix] = useState(barberia || "");
-  const [barberoFix, setBarberoFix] = useState(barbero || "");
+  const [barbero, setBarbero] = useState("");
+  const [barberos, setBarberos] = useState([]);
 
-  useEffect(() => {
-    const cargarDatosAux = async () => {
-      // Guardar en AsyncStorage lo que sí viene
-      if (barberia) await AsyncStorage.setItem("ultima_barberia", barberia);
-      if (barbero) await AsyncStorage.setItem("ultimo_barbero", barbero);
+  const [fecha, setFecha] = useState(new Date());
+  const [hora, setHora] = useState(new Date());
 
-      // Recuperar si no vino nada
-      if (!barberia) {
-        const guardada = await AsyncStorage.getItem("ultima_barberia");
-        if (guardada) setBarberiaFix(guardada);
-      }
+  const [mostrarFecha, setMostrarFecha] = useState(false);
+  const [mostrarHora, setMostrarHora] = useState(false);
 
-      if (!barbero) {
-        const guardado = await AsyncStorage.getItem("ultimo_barbero");
-        if (guardado) setBarberoFix(guardado);
-      }
-    };
+  const [loading, setLoading] = useState(true);
 
-    cargarDatosAux();
-  }, []);
-  // ---------------------------------------------
+  const API_BARBEROS = `https://codbarber-api.onrender.com/barberos.php?id_barberia=${id_barberia}`;
 
-  const API_URL = "https://codbarber-api.onrender.com/agendar.php";
-
-  const confirmar = async () => {
+  const cargarBarberos = async () => {
     try {
-      const id_cliente = await AsyncStorage.getItem("id_cliente");
-
-      if (!id_cliente) {
-        Alert.alert("Error", "No se encontró la sesión del usuario.");
-        router.replace("/login");
-        return;
-      }
-
-      const body = {
-        id_cliente: Number(id_cliente),
-        id_barbero: Number(id_barbero),
-        id_servicio: Number(id_servicio),
-        fecha: fecha,
-        hora: hora,
-      };
-
-      console.log("BODY ENVIADO DESDE DETALLE:", body);
-
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
+      const response = await fetch(API_BARBEROS);
       const data = await response.json();
-      console.log("RESPUESTA API (DETALLE):", data);
 
       if (!data.success) {
-        Alert.alert("Error", data.message);
+        Alert.alert("Error", "No se pudieron cargar los barberos.");
         return;
       }
 
-      Alert.alert(
-        "Cita creada",
-        "Tu cita fue registrada correctamente :)",
-        [{ text: "OK", onPress: () => router.push("/perfil") }]
-      );
+      setBarberos(data.barberos);
     } catch (error) {
-      console.log("ERROR:", error);
-      Alert.alert("Error", "No se pudo conectar al servidor :(");
+      console.log("ERROR BARBEROS:", error);
+      Alert.alert("Error", "No se pudo conectar al servidor.");
     }
+
+    setLoading(false);
   };
+
+  useEffect(() => {
+    cargarBarberos();
+  }, []);
+
+  const agendar = async () => {
+    if (!barbero) {
+      Alert.alert("Error", "Selecciona un barbero.");
+      return;
+    }
+
+    const id_cliente = await AsyncStorage.getItem("id_cliente");
+
+    if (!id_cliente) {
+      Alert.alert("Error", "No se encontró la sesión del usuario.");
+      router.replace("/login");
+      return;
+    }
+
+    // Formato fecha/hora
+    const f = fecha.toISOString().split("T")[0];
+    const h = hora.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    // Obtener nombre del barbero seleccionado
+    const barberoSeleccionado = barberos.find(
+      (b) => b.id_barbero == barbero
+    );
+
+    const nombreBarbero = barberoSeleccionado?.nombre || "Barbero";
+
+    // 🔥 Enviar todo al DETALLE
+    router.push(
+      `/cita_detalle` +
+        `?barberia=${encodeURIComponent(barberia_nombre)}` +
+        `&servicio=${encodeURIComponent(servicio_nombre)}` +
+        `&barbero=${encodeURIComponent(nombreBarbero)}` +
+        `&fecha=${f}` +
+        `&hora=${h}` +
+        `&precio=0` + // Si manejas precio en servicios puedes enviarlo aquí
+        `&id_servicio=${id_servicio}` +
+        `&id_barbero=${barbero}`
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.cargando}>
+        <ActivityIndicator size="large" color="#1E90FF" />
+        <Text style={{ color: "white", marginTop: 10 }}>
+          Cargando barberos...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Detalle de tu Cita</Text>
+      <Text style={styles.title}>Agendar Cita</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Barbería:</Text>
-        <Text style={styles.value}>{barberiaFix}</Text>
-
-        <Text style={styles.label}>Servicio:</Text>
-        <Text style={styles.value}>{servicio}</Text>
-
-        <Text style={styles.label}>Barbero:</Text>
-        <Text style={styles.value}>{barberoFix}</Text>
-
-        <Text style={styles.label}>Fecha:</Text>
-        <Text style={styles.value}>{fecha}</Text>
-
-        <Text style={styles.label}>Hora:</Text>
-        <Text style={styles.value}>{hora}</Text>
-
-        <Text style={styles.label}>Precio:</Text>
-        <Text style={styles.price}>${precio}</Text>
+      {/* Barbero */}
+      <Text style={styles.label}>Selecciona un barbero</Text>
+      <View style={styles.pickerBox}>
+        <Picker
+          selectedValue={barbero}
+          dropdownIconColor="white"
+          style={styles.picker}
+          onValueChange={(v) => setBarbero(v)}
+        >
+          <Picker.Item label="-- Seleccionar --" value="" />
+          {barberos.map((br) => (
+            <Picker.Item
+              key={br.id_barbero}
+              label={br.nombre}
+              value={br.id_barbero}
+            />
+          ))}
+        </Picker>
       </View>
 
-      <TouchableOpacity style={styles.buttonPrimary} onPress={confirmar}>
-        <Text style={styles.buttonText}>Confirmar Cita</Text>
+      {/* Fecha */}
+      <Text style={styles.label}>Fecha</Text>
+      <TouchableOpacity
+        style={styles.dateButton}
+        onPress={() => setMostrarFecha(true)}
+      >
+        <Text style={styles.dateText}>{fecha.toISOString().split("T")[0]}</Text>
       </TouchableOpacity>
 
+      {mostrarFecha && (
+        <DateTimePicker
+          value={fecha}
+          mode="date"
+          display="spinner"
+          onChange={(e, selected) => {
+            setMostrarFecha(false);
+            if (selected) setFecha(selected);
+          }}
+        />
+      )}
+
+      {/* Hora */}
+      <Text style={styles.label}>Hora</Text>
       <TouchableOpacity
-        style={styles.buttonCancel}
-        onPress={() => router.back()}
+        style={styles.dateButton}
+        onPress={() => setMostrarHora(true)}
       >
-        <Text style={styles.cancelText}>Cancelar</Text>
+        <Text style={styles.dateText}>
+          {hora.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Text>
+      </TouchableOpacity>
+
+      {mostrarHora && (
+        <DateTimePicker
+          value={hora}
+          mode="time"
+          is24Hour={true}
+          display="spinner"
+          onChange={(e, selected) => {
+            setMostrarHora(false);
+            if (selected) setHora(selected);
+          }}
+        />
+      )}
+
+      {/* Botón agendar */}
+      <TouchableOpacity style={styles.button} onPress={agendar}>
+        <Text style={styles.buttonText}>Confirmar cita</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-// ESTILOS
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#04121F",
-    padding: 25,
+    paddingHorizontal: 25,
+    paddingTop: 40,
+  },
+  cargando: {
+    flex: 1,
+    backgroundColor: "#04121F",
+    justifyContent: "center",
+    alignItems: "center",
   },
   title: {
-    fontSize: 28,
-    color: "#1E90FF",
-    fontWeight: "700",
+    fontSize: 32,
     textAlign: "center",
-    marginBottom: 30,
-    marginTop: 20,
-  },
-  card: {
-    backgroundColor: "#0F0F0F",
-    padding: 20,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#1E90FF55",
-    marginBottom: 30,
+    color: "#1E90FF",
+    marginBottom: 25,
+    fontWeight: "700",
   },
   label: {
-    fontSize: 16,
     color: "#1E90FF",
+    marginBottom: 5,
+    marginTop: 15,
     fontWeight: "600",
-    marginTop: 10,
   },
-  value: {
-    fontSize: 16,
+  pickerBox: {
+    backgroundColor: "#0F0F0F",
+    borderColor: "#1E90FF",
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+  picker: {
     color: "white",
-    marginTop: 3,
   },
-  price: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#36C26B",
+  dateButton: {
+    backgroundColor: "#0F0F0F",
+    borderColor: "#1E90FF",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 15,
     marginTop: 5,
   },
-  buttonPrimary: {
+  dateText: {
+    color: "white",
+    fontSize: 16,
+  },
+  button: {
     backgroundColor: "#1E90FF",
     padding: 15,
     borderRadius: 10,
+    marginTop: 30,
   },
   buttonText: {
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
     color: "white",
-  },
-  buttonCancel: {
-    marginTop: 20,
-    padding: 15,
-  },
-  cancelText: {
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#D63C3C",
   },
 });

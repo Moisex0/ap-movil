@@ -11,16 +11,12 @@ import {
 } from "react-native";
 
 export default function Servicios() {
-  // Tomar id_barberia correcto :)
-  const { id_barberia } = useLocalSearchParams();
+  // Tomar id_barberia y nombre_barberia si viene
+  const { id_barberia, barberia_nombre } = useLocalSearchParams();
 
-  // Guardar servicios
   const [servicios, setServicios] = useState([]);
-
-  // Loader
   const [loading, setLoading] = useState(true);
 
-  // API Render
   const API_URL = `https://codbarber-api.onrender.com/servicios.php?id_barberia=${id_barberia}`;
 
   const cargarServicios = async () => {
@@ -34,7 +30,6 @@ export default function Servicios() {
       }
 
       setServicios(data.servicios);
-
     } catch (error) {
       console.log("ERROR SERVICIOS:", error);
       Alert.alert("Error", "No se pudo conectar al servidor.");
@@ -77,7 +72,11 @@ export default function Servicios() {
               style={styles.button}
               onPress={() =>
                 router.push(
-                  `/agendar?id_barberia=${id_barberia}&id_servicio=${servicio.id_servicio}`
+                  `/agendar` +
+                    `?id_barberia=${id_barberia}` +
+                    `&barberia_nombre=${encodeURIComponent(barberia_nombre)}` +
+                    `&id_servicio=${servicio.id_servicio}` +
+                    `&servicio_nombre=${encodeURIComponent(servicio.nombre)}`
                 )
               }
             >
