@@ -1,14 +1,14 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function Barberias() {
@@ -22,7 +22,7 @@ export default function Barberias() {
   // Para saber si aún está cargando :)
   const [cargando, setCargando] = useState(true);
 
-  // URL de tu API con la IP actual (XAMPP)
+  // URL de tu API en Render
   const API_URL = "https://codbarber-api.onrender.com/barberias.php";
 
   // Función que trae las barberías desde PHP :)
@@ -71,7 +71,9 @@ export default function Barberias() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push(`/servicios?id=${item.id_barberia}`)}
+            onPress={() =>
+              router.push(`/servicios?id_barberia=${item.id_barberia}`)
+            }
           >
             <Image
               source={{ uri: "https://i.imgur.com/jJ2zFQX.png" }}
@@ -83,7 +85,6 @@ export default function Barberias() {
               <Text style={styles.cardDesc}>{item.direccion}</Text>
               <Text style={styles.cardLink}>Ver servicios →</Text>
             </View>
-
           </TouchableOpacity>
         )}
       />

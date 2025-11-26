@@ -1,26 +1,24 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 
 export default function Register() {
-
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [telefono, setTelefono] = useState("");
   const [contrasena, setContrasena] = useState("");
 
-  // URL de tu API en XAMPP (IP actual)
+  // URL API render
   const API_URL = "https://codbarber-api.onrender.com/register.php";
 
   const registrar = async () => {
-
     if (
       nombre.trim() === "" ||
       correo.trim() === "" ||
@@ -30,19 +28,35 @@ export default function Register() {
       return;
     }
 
+    const body = {
+      nombre: nombre.trim(),
+      correo: correo.trim(),
+      telefono: telefono.trim(),
+      contrasena: contrasena.trim(),
+    };
+
+    console.log("BODY REGISTER:", body);
+
     try {
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: nombre,
-          correo: correo,
-          telefono: telefono,
-          contrasena: contrasena,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      // Parse seguro
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        console.log("ERROR JSON REGISTER:", jsonErr);
+        Alert.alert("Error", "Respuesta inválida del servidor.");
+        return;
+      }
+
       console.log("RESPUESTA REGISTER:", data);
 
       if (!data.success) {
@@ -75,6 +89,8 @@ export default function Register() {
         style={styles.input}
         placeholder="Correo"
         placeholderTextColor="#999"
+        keyboardType="email-address"
+        autoCapitalize="none"
         onChangeText={setCorreo}
       />
 
@@ -82,6 +98,7 @@ export default function Register() {
         style={styles.input}
         placeholder="Teléfono"
         placeholderTextColor="#999"
+        keyboardType="phone-pad"
         onChangeText={setTelefono}
       />
 

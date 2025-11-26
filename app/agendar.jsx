@@ -58,7 +58,7 @@ export default function AgendarCita() {
       return;
     }
 
-    // Obtener id_cliente REAL desde AsyncStorage 🔥
+    // Obtener id_cliente REAL desde AsyncStorage
     const id_cliente = await AsyncStorage.getItem("id_cliente");
 
     if (!id_cliente) {
@@ -74,20 +74,30 @@ export default function AgendarCita() {
       hour12: false,
     });
 
+    // Construir el body REAL
+    const body = {
+      id_cliente: Number(id_cliente),
+      id_barbero: Number(barbero),
+      id_servicio: Number(id_servicio),
+      fecha: f,
+      hora: h,
+    };
+
+    console.log("BODY ENVIADO:", body);
+
     try {
       const response = await fetch(API_AGENDAR, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_cliente: id_cliente, // 🔥 Ahora sí enviamos el correcto
-          id_barbero: barbero,
-          id_servicio: id_servicio,
-          fecha: f,
-          hora: h,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
+
+      console.log("RESPUESTA API:", data);
 
       if (!data.success) {
         Alert.alert("Error", data.message);

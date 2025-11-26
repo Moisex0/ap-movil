@@ -1,10 +1,11 @@
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,7 +20,7 @@ export default function CitasHistorial() {
 
   const cargarCitas = async () => {
     try {
-      // 🔥 Obtener id_cliente real del usuario logueado
+      // ID del cliente guardado en AsyncStorage
       const id_cliente = await AsyncStorage.getItem("id_cliente");
 
       if (!id_cliente) {
@@ -28,8 +29,10 @@ export default function CitasHistorial() {
         return;
       }
 
-      // URL con el ID REAL
-      const API_URL = `https://codbarber-api.onrender.com/mis_citas.php?id_cliente=${id_cliente}`;
+      // Convertir a número para seguridad
+      const API_URL = `https://codbarber-api.onrender.com/mis_citas.php?id_cliente=${Number(
+        id_cliente
+      )}`;
 
       const res = await fetch(API_URL);
       const data = await res.json();
@@ -97,7 +100,15 @@ export default function CitasHistorial() {
                 style={styles.button}
                 onPress={() =>
                   router.push(
-                    `/cita_detalle?servicio=${item.servicio}&fecha=${item.fecha}&hora=${item.hora}&precio=${item.precio}`
+                    `/cita_detalle` +
+                      `?barberia=${encodeURIComponent(item.barberia)}` +
+                      `&servicio=${encodeURIComponent(item.servicio)}` +
+                      `&barbero=${encodeURIComponent(item.barbero)}` +
+                      `&fecha=${item.fecha}` +
+                      `&hora=${item.hora}` +
+                      `&precio=${item.precio}` +
+                      `&id_servicio=${item.id_servicio}` +
+                      `&id_barbero=${item.id_barbero}`
                   )
                 }
               >

@@ -1,29 +1,28 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function Servicios() {
-  // Tomo el id_barberia que viene en la URL :)
-  const { id } = useLocalSearchParams();
+  // Tomar id_barberia correcto :)
+  const { id_barberia } = useLocalSearchParams();
 
-  // Aquí guardaré los servicios reales que vengan desde la API :)
+  // Guardar servicios
   const [servicios, setServicios] = useState([]);
 
-  // Para mostrar un loader mientras se carga :)
+  // Loader
   const [loading, setLoading] = useState(true);
 
-  // URL de API actualizada (usando tu IP correcta)
-  const API_URL = `https://codbarber-api.onrender.com/servicios.php?id_barberia=${id}`;
+  // API Render
+  const API_URL = `https://codbarber-api.onrender.com/servicios.php?id_barberia=${id_barberia}`;
 
-  // Función para traer servicios de la API :)
   const cargarServicios = async () => {
     try {
       const response = await fetch(API_URL);
@@ -52,7 +51,9 @@ export default function Servicios() {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#1E90FF" />
-        <Text style={{ color: "white", marginTop: 10 }}>Cargando servicios...</Text>
+        <Text style={{ color: "white", marginTop: 10 }}>
+          Cargando servicios...
+        </Text>
       </View>
     );
   }
@@ -72,11 +73,12 @@ export default function Servicios() {
 
             <Text style={styles.cardPrice}>${servicio.precio}</Text>
 
-            {/* Enviar el ID de servicio y barbería a agendar.jsx :) */}
             <TouchableOpacity
               style={styles.button}
               onPress={() =>
-                router.push(`/agendar?id_barberia=${id}&id_servicio=${servicio.id_servicio}`)
+                router.push(
+                  `/agendar?id_barberia=${id_barberia}&id_servicio=${servicio.id_servicio}`
+                )
               }
             >
               <Text style={styles.buttonText}>Seleccionar</Text>

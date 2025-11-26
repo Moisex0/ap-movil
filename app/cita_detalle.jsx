@@ -3,16 +3,23 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function CitaDetalle() {
-  const { barberia, servicio, barbero, fecha, hora, precio, id_servicio, id_barbero } =
-    useLocalSearchParams();
+  const {
+    barberia,
+    servicio,
+    barbero,
+    fecha,
+    hora,
+    precio,
+    id_servicio,
+    id_barbero,
+  } = useLocalSearchParams();
 
-  // URL de API
+  // URL API
   const API_URL = "https://codbarber-api.onrender.com/agendar.php";
 
   const confirmar = async () => {
     try {
-
-      // 🔥 Obtener ID real del usuario logueado
+      // Obtener ID real del usuario
       const id_cliente = await AsyncStorage.getItem("id_cliente");
 
       if (!id_cliente) {
@@ -21,20 +28,28 @@ export default function CitaDetalle() {
         return;
       }
 
+      // Construimos el JSON REAL que enviamos a la API
+      const body = {
+        id_cliente: Number(id_cliente),
+        id_barbero: Number(id_barbero),
+        id_servicio: Number(id_servicio),
+        fecha: fecha,
+        hora: hora,
+      };
+
+      console.log("BODY ENVIADO DESDE DETALLE:", body);
+
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_cliente: id_cliente,  // 🔥 ahora sí el real
-          id_barbero: id_barbero,
-          id_servicio: id_servicio,
-          fecha: fecha,
-          hora: hora,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
-      console.log("RESPUESTA AGENDAR:", data);
+      console.log("RESPUESTA API (DETALLE):", data);
 
       if (!data.success) {
         Alert.alert("Error", data.message);
@@ -46,7 +61,6 @@ export default function CitaDetalle() {
         "Tu cita fue registrada correctamente :)",
         [{ text: "OK", onPress: () => router.push("/perfil") }]
       );
-
     } catch (error) {
       console.log("ERROR:", error);
       Alert.alert("Error", "No se pudo conectar al servidor :(");
@@ -81,7 +95,10 @@ export default function CitaDetalle() {
         <Text style={styles.buttonText}>Confirmar Cita</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.buttonCancel} onPress={() => router.back()}>
+      <TouchableOpacity
+        style={styles.buttonCancel}
+        onPress={() => router.back()}
+      >
         <Text style={styles.cancelText}>Cancelar</Text>
       </TouchableOpacity>
     </View>

@@ -16,32 +16,46 @@ export default function Login() {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
 
-  const API_URL = "https://codbarber-api.onrender.com/api/login.php";
+  const API_URL = "https://codbarber-api.onrender.com/login.php";
 
   const iniciarSesion = async () => {
-    console.log("=== Intentando iniciar sesión... ===");
+    console.log("=== Intentando iniciar sesión ===");
 
     if (!correo || !contrasena) {
       Alert.alert("Error", "Ingresa correo y contraseña.");
       return;
     }
 
+    const body = {
+      correo: correo.trim(),
+      contrasena: contrasena.trim(),
+    };
+
+    console.log("BODY ENVIADO:", body);
+
     try {
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          correo: correo,
-          contrasena: contrasena,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(body),
       });
-      console.log('response',response);
-      console.log('response',typeof response);
 
-      const data = await response.json();
+      console.log("STATUS:", response.status);
 
-      // 🔥 LOG 1 — ver EXACTAMENTE qué envía tu backend
-      console.log("=== RESPUESTA DE API ===", data);
+      // Evitar error si la respuesta no es JSON válido
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        console.log("ERROR PARSE JSON:", jsonErr);
+        Alert.alert("Error", "Respuesta inválida del servidor.");
+        return;
+      }
+
+      console.log("RESPUESTA API:", data);
 
       if (!data.success) {
         Alert.alert("Error", data.message);
@@ -55,20 +69,15 @@ export default function Login() {
         return;
       }
 
-      console.log("Guardando sesión...", cliente);
-
-      // 🔥 GUARDAR SESIÓN DEL USUARIO
+      // Guardar sesión
       await AsyncStorage.setItem("id_cliente", cliente.id_cliente.toString());
       await AsyncStorage.setItem("nombre", cliente.nombre);
       await AsyncStorage.setItem("correo", cliente.correo);
 
-      // 🔥 LOG 2 — confirmar que AsyncStorage realmente guardó la sesión
-      const prueba = await AsyncStorage.getItem("id_cliente");
-      console.log("ID GUARDADO EN ASYNC:", prueba);
+      console.log("Sesión guardada correctamente.");
 
-      // Redirigir al perfil
+      // Navegar al perfil
       router.replace("/perfil");
-
     } catch (error) {
       console.log("=== ERROR LOGIN ===", error);
       Alert.alert("Error", "No se pudo conectar con el servidor.");

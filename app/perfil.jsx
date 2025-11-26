@@ -9,7 +9,7 @@ export default function Perfil() {
   useEffect(() => {
     const cargarUsuario = async () => {
       try {
-        // 🔥 Obtener ID del usuario logueado
+        // Obtener ID del usuario logueado
         const id_cliente = await AsyncStorage.getItem("id_cliente");
 
         if (!id_cliente) {
@@ -18,21 +18,33 @@ export default function Perfil() {
           return;
         }
 
-        // URL DINÁMICA
-        const API_URL = `https://codbarber-api.onrender.com/mis_datos.php?id_cliente=${id_cliente}`;
+        // URL correcta usando Number()
+        const API_URL = `https://codbarber-api.onrender.com/mis_datos.php?id_cliente=${Number(
+          id_cliente
+        )}`;
 
-        const response = await fetch(API_URL);
-        const data = await response.json();
+        const response = await fetch(API_URL, {
+          headers: { Accept: "application/json" },
+        });
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch (jsonErr) {
+          console.log("ERROR PARSE JSON PERFIL:", jsonErr);
+          Alert.alert("Error", "Respuesta inválida del servidor.");
+          return;
+        }
 
         console.log("DATOS PERFIL:", data);
 
-        if (!data.success) {
+        if (!data.success || !data.usuario) {
           Alert.alert("Error", "No se pudieron cargar los datos del perfil.");
           return;
         }
 
         setUsuario(data.usuario);
-
       } catch (error) {
         console.log("ERROR PERFIL:", error);
         Alert.alert("Error", "No se pudo conectar al servidor.");
@@ -53,7 +65,6 @@ export default function Perfil() {
   }
 
   const cerrarSesion = async () => {
-    // 🔥 BORRAR LA SESIÓN
     await AsyncStorage.clear();
     router.replace("/login");
   };
