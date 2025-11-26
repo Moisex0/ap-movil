@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function CitaDetalle() {
@@ -14,12 +15,23 @@ export default function CitaDetalle() {
     id_barbero,
   } = useLocalSearchParams();
 
-  // URL API
+  // ------------------------------
+  // FIX: Proteger valores faltantes
+  // ------------------------------
+  const [barberiaFix, setBarberiaFix] = useState(barberia || "Sin dato");
+  const [barberoFix, setBarberoFix] = useState(barbero || "Sin dato");
+
+  useEffect(() => {
+    // Proteger valores si vienen vacíos
+    if (!barberia || barberia === "undefined") setBarberiaFix("Sin dato");
+    if (!barbero || barbero === "undefined") setBarberoFix("Sin dato");
+  }, []);
+  // ------------------------------
+
   const API_URL = "https://codbarber-api.onrender.com/agendar.php";
 
   const confirmar = async () => {
     try {
-      // Obtener ID real del usuario
       const id_cliente = await AsyncStorage.getItem("id_cliente");
 
       if (!id_cliente) {
@@ -28,7 +40,6 @@ export default function CitaDetalle() {
         return;
       }
 
-      // Construimos el JSON REAL que enviamos a la API
       const body = {
         id_cliente: Number(id_cliente),
         id_barbero: Number(id_barbero),
@@ -73,13 +84,13 @@ export default function CitaDetalle() {
 
       <View style={styles.card}>
         <Text style={styles.label}>Barbería:</Text>
-        <Text style={styles.value}>{barberia}</Text>
+        <Text style={styles.value}>{barberiaFix}</Text>
 
         <Text style={styles.label}>Servicio:</Text>
         <Text style={styles.value}>{servicio}</Text>
 
         <Text style={styles.label}>Barbero:</Text>
-        <Text style={styles.value}>{barbero}</Text>
+        <Text style={styles.value}>{barberoFix}</Text>
 
         <Text style={styles.label}>Fecha:</Text>
         <Text style={styles.value}>{fecha}</Text>

@@ -29,7 +29,7 @@ export default function CitasHistorial() {
         return;
       }
 
-      // Convertir a número para seguridad
+      // Convertido a número para mayor seguridad
       const API_URL = `https://codbarber-api.onrender.com/mis_citas.php?id_cliente=${Number(
         id_cliente
       )}`;
@@ -83,6 +83,10 @@ export default function CitasHistorial() {
                 📅 {item.fecha}    🕒 {item.hora}
               </Text>
 
+              {/* 🔥 Nuevos datos que ahora sí vienen desde mis_citas.php */}
+              <Text style={styles.cardText}>💈 Barbería: {item.barberia || "Sin dato"}</Text>
+              <Text style={styles.cardText}>💇 Barbero: {item.barbero || "Sin dato"}</Text>
+
               <Text style={styles.cardText}>💵 Precio: ${item.precio}</Text>
 
               <Text
@@ -101,14 +105,14 @@ export default function CitasHistorial() {
                 onPress={() =>
                   router.push(
                     `/cita_detalle` +
-                      `?barberia=${encodeURIComponent(item.barberia)}` +
-                      `&servicio=${encodeURIComponent(item.servicio)}` +
-                      `&barbero=${encodeURIComponent(item.barbero)}` +
+                      `?barberia=${encodeURIComponent(item.barberia || "")}` +
+                      `&servicio=${encodeURIComponent(item.servicio || "")}` +
+                      `&barbero=${encodeURIComponent(item.barbero || "")}` +
                       `&fecha=${item.fecha}` +
                       `&hora=${item.hora}` +
                       `&precio=${item.precio}` +
-                      `&id_servicio=${item.id_servicio}` +
-                      `&id_barbero=${item.id_barbero}`
+                      `&id_servicio=${item.id_servicio || 0}` +
+                      `&id_barbero=${item.id_barbero || 0}`
                   )
                 }
               >
