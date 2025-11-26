@@ -2,12 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function Login() {
@@ -16,7 +16,7 @@ export default function Login() {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
 
-  const API_URL = "https://codbarber-api.onrender.com/login.php";
+  const API_URL = "https://codbarber-api.onrender.com/api/login.php";
 
   const iniciarSesion = async () => {
     console.log("=== Intentando iniciar sesión... ===");
@@ -35,6 +35,8 @@ export default function Login() {
           contrasena: contrasena,
         }),
       });
+      console.log('response',response);
+      console.log('response',typeof response);
 
       const data = await response.json();
 
